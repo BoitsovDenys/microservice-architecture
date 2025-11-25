@@ -7,12 +7,19 @@ build/
 
 ### IntelliJ IDEA ###
 /.idea/
+.idea/
 *.iws
 *.iml
 *.ipr
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
+
+### CodeMie ###
+.codemie/
+
+### Scripts ###
+scripts/
 
 ### Eclipse ###
 .apt_generated
