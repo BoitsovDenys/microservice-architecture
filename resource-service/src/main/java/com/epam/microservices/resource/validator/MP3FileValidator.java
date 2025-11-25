@@ -13,14 +13,10 @@ public class MP3FileValidator {
             throw new EmptyFileException("File is empty");
         }
 
-        try {
-            Tika tika = new Tika();
-            String detectedType = tika.detect(fileBytes);
-            if (!detectedType.equals("audio/mpeg")) {
-                throw new InvalidMP3FileException("Invalid MP3 file format. Detected: " + detectedType);
-            }
-        } catch (Exception e) {
-            throw new InvalidMP3FileException("Error validating MP3 file: " + e.getMessage());
+        Tika tika = new Tika();
+        String detectedType = tika.detect(fileBytes);
+        if (!detectedType.equals("audio/mpeg")) {
+            throw new InvalidMP3FileException("Invalid file format: " + detectedType + ". Only MP3 files are allowed");
         }
     }
 }

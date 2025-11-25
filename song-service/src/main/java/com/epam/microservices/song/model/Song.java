@@ -32,7 +32,7 @@ public class Song {
     private String album;
     
     @NotBlank(message = "Duration is required")
-    @Pattern(regexp = "^\\d{2}:\\d{2}$", message = "Duration must be in mm:ss format with leading zeros (e.g., 03:45)")
+    @Pattern(regexp = "^\\d{2}:\\d{2}$", message = "Duration must be in mm:ss format with leading zeros")
     private String duration;
     
     @NotBlank(message = "Year is required")

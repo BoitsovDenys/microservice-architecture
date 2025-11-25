@@ -26,7 +26,7 @@ public class SongService {
     
     public SongIdResponse createSong(SongDto songDto) {
         if (songRepository.existsById(songDto.getId())) {
-            throw new SongAlreadyExistsException("Song with ID " + songDto.getId() + " already exists");
+            throw new SongAlreadyExistsException("Song metadata for ID=" + songDto.getId() + " already exists");
         }
         
         Song song = new Song(
@@ -44,11 +44,11 @@ public class SongService {
     
     public SongDto getSongById(Long id) {
         if (id == null || id <= 0) {
-            throw new InvalidRequestException("Invalid song ID");
+            throw new InvalidRequestException("Invalid ID format: '" + id + "'. Only positive integers are allowed");
         }
     
         Song song = songRepository.findById(id)
-            .orElseThrow(() -> new SongNotFoundException("Song with ID=" + id + " not found"));
+            .orElseThrow(() -> new SongNotFoundException("Song metadata for ID=" + id + " not found"));
 
         return new SongDto(
             song.getId(),
@@ -66,10 +66,22 @@ public class SongService {
         }
     
         if (idsString.length() > CSV_MAX_LENGTH) {
-            throw new InvalidRequestException("CSV string exceeds maximum allowed length: " + idsString.length() + " (max " + CSV_MAX_LENGTH + ")");
+            throw new InvalidRequestException("CSV string is too long: received " + idsString.length() + " characters, maximum allowed is " + CSV_MAX_LENGTH);
         }
     
         if (!VALID_ID_PATTERN.matcher(idsString).matches()) {
+            // We need to identify which exact value is invalid to match the spec
+            String[] idParts = idsString.split(",");
+            for (String idPart : idParts) {
+                try {
+                    long idValue = Long.parseLong(idPart);
+                    if (idValue <= 0) {
+                        throw new InvalidRequestException("Invalid ID format: '" + idPart + "'. Only positive integers are allowed");
+                    }
+                } catch (NumberFormatException e) {
+                    throw new InvalidRequestException("Invalid ID format: '" + idPart + "'. Only positive integers are allowed");
+                }
+            }
             throw new InvalidRequestException("Invalid ID format. IDs must be positive integers separated by commas");
         }
     

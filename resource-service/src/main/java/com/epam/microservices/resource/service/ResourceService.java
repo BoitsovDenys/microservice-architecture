@@ -57,7 +57,7 @@ public class ResourceService {
 
     public byte[] getResourceById(Long id) {
         if (id == null || id <= 0) {
-            throw new InvalidRequestException("Invalid resource ID: " + id);
+            throw new InvalidRequestException("Invalid ID format: '" + id + "'. Only positive integers are allowed");
         }
 
         try {
@@ -76,13 +76,24 @@ public class ResourceService {
         }
 
         if (idsString.length() > CSV_MAX_LENGTH) {
-            throw new InvalidRequestException("CSV string exceeds maximum allowed length: " +
-                idsString.length() + " (max " + CSV_MAX_LENGTH + ")");
+            throw new InvalidRequestException("CSV string is too long: received " +
+                idsString.length() + " characters, maximum allowed is " + CSV_MAX_LENGTH);
         }
 
         if (!VALID_ID_PATTERN.matcher(idsString).matches()) {
-            throw new InvalidRequestException(
-                "Invalid ID format. IDs must be positive integers separated by commas");
+            // We need to identify which exact value is invalid to match the spec
+            String[] idParts = idsString.split(",");
+            for (String idPart : idParts) {
+                try {
+                    long idValue = Long.parseLong(idPart);
+                    if (idValue <= 0) {
+                        throw new InvalidRequestException("Invalid ID format: '" + idPart + "'. Only positive integers are allowed");
+                    }
+                } catch (NumberFormatException e) {
+                    throw new InvalidRequestException("Invalid ID format: '" + idPart + "'. Only positive integers are allowed");
+                }
+            }
+            throw new InvalidRequestException("Invalid ID format. IDs must be positive integers separated by commas");
         }
 
         List<Long> ids = Arrays.stream(idsString.split(","))

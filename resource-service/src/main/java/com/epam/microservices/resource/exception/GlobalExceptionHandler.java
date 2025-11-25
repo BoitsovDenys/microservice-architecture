@@ -3,10 +3,15 @@ package com.epam.microservices.resource.exception;
 import com.epam.microservices.resource.dto.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -19,7 +24,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidMP3FileException.class)
     public ResponseEntity<ErrorResponse> handleInvalidMP3FileException(InvalidMP3FileException e) {
-        ErrorResponse errorResponse = new ErrorResponse("Validation error", "400", e.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), "400");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
     
@@ -31,7 +36,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(EmptyFileException.class)
     public ResponseEntity<ErrorResponse> handleEmptyFileException(EmptyFileException e) {
-        ErrorResponse errorResponse = new ErrorResponse("Validation error", "400", e.getMessage());
+        Map<String, String> details = new HashMap<>();
+        details.put("file", e.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse("Validation error", "400", details);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
@@ -43,7 +50,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(org.springframework.web.HttpMediaTypeNotSupportedException.class)
     public ResponseEntity<ErrorResponse> handleMediaTypeException(org.springframework.web.HttpMediaTypeNotSupportedException e) {
-        ErrorResponse errorResponse = new ErrorResponse("Unsupported media type", "415", "Request Content-Type is not supported");
+        ErrorResponse errorResponse = new ErrorResponse("Unsupported media type, request Content-Type is not supported", "415");
         return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(errorResponse);
     }
 
@@ -53,10 +60,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(errorResponse);
     }
 
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException e) {
+        Map<String, String> fieldsWithErrors = new HashMap<>();
+        for (FieldError error : e.getBindingResult().getFieldErrors()) {
+            fieldsWithErrors.put(error.getField(), error.getDefaultMessage());
+        }
+        
+        ErrorResponse errorResponse = new ErrorResponse("Validation error", "400", fieldsWithErrors);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
-        String paramName = ex.getName();
         String value = String.valueOf(ex.getValue());
         Class<?> requiredType = ex.getRequiredType();
 
@@ -84,17 +102,12 @@ public class GlobalExceptionHandler {
             requirement = "a valid value";
         }
 
-        String details = String.format("Invalid value for parameter '%s': '%s'. Must be %s.", paramName, value, requirement);
-        return new ErrorResponse("Validation error", "400", details);
+        return new ErrorResponse(String.format("Invalid value '%s'. Must be %s.", value, requirement), "400");
     }
     
     @ExceptionHandler(ResourceDeletionException.class)
     public ResponseEntity<ErrorResponse> handleResourceDeletionException(ResourceDeletionException e) {
-        ErrorResponse errorResponse = new ErrorResponse(
-                "Internal server error",
-                "500",
-                "Failed to delete one or more resources"
-        );
+        ErrorResponse errorResponse = new ErrorResponse("Failed to delete one or more resources", "500");
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
 
