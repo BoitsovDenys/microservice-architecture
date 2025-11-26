@@ -26,7 +26,7 @@ public class SongService {
     
     public SongIdResponse createSong(SongDto songDto) {
         if (songRepository.existsById(songDto.getId())) {
-            throw new SongAlreadyExistsException("Song metadata for ID=" + songDto.getId() + " already exists");
+            throw new SongAlreadyExistsException("Metadata for resource ID=" + songDto.getId() + " already exists");
         }
         
         Song song = new Song(

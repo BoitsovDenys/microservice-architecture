@@ -1,5 +1,6 @@
 package com.epam.microservices.resource.validator;
 
+import com.epam.microservices.resource.constants.MediaTypeConstants;
 import com.epam.microservices.resource.exception.EmptyFileException;
 import com.epam.microservices.resource.exception.InvalidMP3FileException;
 import org.apache.tika.Tika;
@@ -15,7 +16,7 @@ public class MP3FileValidator {
 
         Tika tika = new Tika();
         String detectedType = tika.detect(fileBytes);
-        if (!detectedType.equals("audio/mpeg")) {
+        if (!detectedType.equals(MediaTypeConstants.AUDIO_MPEG)) {
             throw new InvalidMP3FileException("Invalid file format: " + detectedType + ". Only MP3 files are allowed");
         }
     }

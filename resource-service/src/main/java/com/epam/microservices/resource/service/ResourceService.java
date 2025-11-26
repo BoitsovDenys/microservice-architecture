@@ -57,7 +57,7 @@ public class ResourceService {
 
     public byte[] getResourceById(Long id) {
         if (id == null || id <= 0) {
-            throw new InvalidRequestException("Invalid ID format: '" + id + "'. Only positive integers are allowed");
+            throw new InvalidRequestException("Invalid value '" + id + "' for ID. Must be a positive integer");
         }
 
         try {
@@ -81,7 +81,6 @@ public class ResourceService {
         }
 
         if (!VALID_ID_PATTERN.matcher(idsString).matches()) {
-            // We need to identify which exact value is invalid to match the spec
             String[] idParts = idsString.split(",");
             for (String idPart : idParts) {
                 try {

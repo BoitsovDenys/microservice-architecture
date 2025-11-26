@@ -4,6 +4,7 @@ import com.epam.microservices.resource.dto.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -48,10 +49,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
-    @ExceptionHandler(org.springframework.web.HttpMediaTypeNotSupportedException.class)
-    public ResponseEntity<ErrorResponse> handleMediaTypeException(org.springframework.web.HttpMediaTypeNotSupportedException e) {
-        ErrorResponse errorResponse = new ErrorResponse("Unsupported media type, request Content-Type is not supported", "415");
-        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(errorResponse);
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMediaTypeException(HttpMediaTypeNotSupportedException e) {
+        String contentType = e.getContentType() != null ? e.getContentType().toString() : "unknown";
+        ErrorResponse errorResponse = new ErrorResponse(
+            String.format("Invalid file format: %s. Only MP3 files are allowed", contentType),
+            "400"
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
     @ExceptionHandler(SongServiceException.class)
@@ -73,36 +78,14 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
-        String value = String.valueOf(ex.getValue());
-        Class<?> requiredType = ex.getRequiredType();
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        String paramName = ex.getName();
+        Object value = ex.getValue();
+        String requiredType = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown";
+        String customMessage = generateCustomMessage(paramName, value, requiredType);
 
-        String requirement;
-        if (requiredType != null) {
-            if (requiredType == Long.class || requiredType == long.class ||
-                requiredType == Integer.class || requiredType == int.class ||
-                requiredType == Short.class || requiredType == short.class ||
-                requiredType == java.math.BigInteger.class) {
-                requirement = "a whole number";
-            } else if (requiredType == Double.class || requiredType == double.class ||
-                       requiredType == Float.class || requiredType == float.class ||
-                       requiredType == java.math.BigDecimal.class) {
-                requirement = "a number";
-            } else if (requiredType == Boolean.class || requiredType == boolean.class) {
-                requirement = "either 'true' or 'false'";
-            } else if ("UUID".equals(requiredType.getSimpleName())) {
-                requirement = "a valid UUID";
-            } else if ("LocalDate".equals(requiredType.getSimpleName())) {
-                requirement = "a valid date";
-            } else {
-                requirement = "a valid value";
-            }
-        } else {
-            requirement = "a valid value";
-        }
-
-        return new ErrorResponse(String.format("Invalid value '%s'. Must be %s.", value, requirement), "400");
+        ErrorResponse errorResponse = new ErrorResponse(customMessage, "400");
+        return ResponseEntity.badRequest().body(errorResponse);
     }
     
     @ExceptionHandler(ResourceDeletionException.class)
@@ -115,5 +98,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleGenericException(Exception e) {
         ErrorResponse errorResponse = new ErrorResponse("Internal server error", "500");
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+    }
+
+    private String generateCustomMessage(String paramName, Object value, String requiredType) {
+        return switch (paramName) {
+            case "id" ->
+                    "Invalid value '" + value + "' for " + paramName.toUpperCase() + ". Must be a positive integer";
+            default ->
+                    "Invalid value '" + value + "' for " + paramName.toUpperCase() + ". Must be of type " + requiredType;
+        };
     }
 }

@@ -1,5 +1,6 @@
 package com.epam.microservices.resource.controller;
 
+import com.epam.microservices.resource.constants.MediaTypeConstants;
 import com.epam.microservices.resource.dto.ResourceIdResponse;
 import com.epam.microservices.resource.dto.ResourceIdsResponse;
 import com.epam.microservices.resource.service.ResourceService;
@@ -17,7 +18,7 @@ public class ResourceController {
         this.resourceService = resourceService;
     }
 
-    @PostMapping
+    @PostMapping(consumes = MediaTypeConstants.AUDIO_MPEG)
     public ResponseEntity<ResourceIdResponse> uploadResource(@RequestBody byte[] fileBytes) {
         ResourceIdResponse response = resourceService.uploadResource(fileBytes);
         return ResponseEntity.ok(response);
@@ -27,7 +28,7 @@ public class ResourceController {
     public ResponseEntity<byte[]> getResource(@PathVariable Long id) {
         byte[] resourceData = resourceService.getResourceById(id);
         return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType("audio/mpeg"))
+                .contentType(MediaType.parseMediaType(MediaTypeConstants.AUDIO_MPEG))
                 .body(resourceData);
     }
 
