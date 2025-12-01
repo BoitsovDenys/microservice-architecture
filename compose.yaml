@@ -1,20 +1,59 @@
 services:
+  # Resource Service Database
   resource-db:
     image: postgres:17-alpine
     container_name: resource-db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: resource_service_db
+      - POSTGRES_DB=${RESOURCE_DB_NAME}
+      - POSTGRES_USER=${RESOURCE_DB_USERNAME}
+      - POSTGRES_PASSWORD=${RESOURCE_DB_PASSWORD}
     ports:
       - "5432:5432"
+    volumes:
+      - ./init-scripts/resource-db:/docker-entrypoint-initdb.d
 
+  # Song Service Database
   song-db:
     image: postgres:17-alpine
     container_name: song-db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: song_service_db
+      - POSTGRES_DB=${SONG_DB_NAME}
+      - POSTGRES_USER=${SONG_DB_USERNAME}
+      - POSTGRES_PASSWORD=${SONG_DB_PASSWORD}
     ports:
       - "5433:5432"
+    volumes:
+      - ./init-scripts/song-db:/docker-entrypoint-initdb.d
+
+  # Song Service
+  song-service:
+    build:
+      context: ./
+      dockerfile: ./song-service/Dockerfile
+    container_name: song-service
+    environment:
+      - SONG_DB_HOST=${SONG_DB_HOST}
+      - SONG_DB_PORT=${SONG_DB_PORT}
+      - SONG_DB_NAME=${SONG_DB_NAME}
+      - SONG_DB_USERNAME=${SONG_DB_USERNAME}
+      - SONG_DB_PASSWORD=${SONG_DB_PASSWORD}
+      - SONG_SERVICE_PORT=${SONG_SERVICE_PORT}
+    ports:
+      - "${SONG_SERVICE_PORT}:${SONG_SERVICE_PORT}"
+
+  # Resource Service
+  resource-service:
+    build:
+      context: ./
+      dockerfile: ./resource-service/Dockerfile
+    container_name: resource-service
+    environment:
+      - RESOURCE_DB_HOST=${RESOURCE_DB_HOST}
+      - RESOURCE_DB_PORT=${RESOURCE_DB_PORT}
+      - RESOURCE_DB_NAME=${RESOURCE_DB_NAME}
+      - RESOURCE_DB_USERNAME=${RESOURCE_DB_USERNAME}
+      - RESOURCE_DB_PASSWORD=${RESOURCE_DB_PASSWORD}
+      - SONG_SERVICE_URL=${SONG_SERVICE_URL}
+      - RESOURCE_SERVICE_PORT=${RESOURCE_SERVICE_PORT}
+    ports:
+      - "${RESOURCE_SERVICE_PORT}:${RESOURCE_SERVICE_PORT}"
