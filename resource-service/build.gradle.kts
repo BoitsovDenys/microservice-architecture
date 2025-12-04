@@ -1,8 +1,10 @@
 plugins {
     id("java")
-    id("org.springframework.boot") version "3.4.1"
+    id("org.springframework.boot") version "3.3.2"
     id("io.spring.dependency-management") version "1.1.5"
 }
+
+var springCloudVersion = "2023.0.5"
 
 group = "com.epam.microservices"
 version = "0.0.1-SNAPSHOT"
@@ -28,9 +30,19 @@ dependencies {
     // HTTP client for calling Song Service
     implementation("org.springframework.boot:spring-boot-starter-webflux")
 
+    // Eureka Client
+    implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
+    implementation("org.springframework.cloud:spring-cloud-starter-loadbalancer")
+
     // Lombok
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
+}
+
+dependencyManagement {
+    imports {
+        mavenBom("org.springframework.cloud:spring-cloud-dependencies:$springCloudVersion")
+    }
 }
 
 tasks.withType<Test> {

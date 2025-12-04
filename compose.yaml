@@ -1,4 +1,15 @@
 services:
+  # Eureka Server
+  eureka-server:
+    build:
+      context: ./
+      dockerfile: ./eureka-server/Dockerfile
+    container_name: eureka-server
+    environment:
+      - EUREKA_SERVER_PORT=${EUREKA_SERVER_PORT}
+    ports:
+      - "${EUREKA_SERVER_PORT}:${EUREKA_SERVER_PORT}"
+
   # Resource Service Database
   resource-db:
     image: postgres:17-alpine
@@ -30,7 +41,8 @@ services:
     build:
       context: ./
       dockerfile: ./song-service/Dockerfile
-    container_name: song-service
+    deploy:
+      replicas: 2
     environment:
       - SONG_DB_HOST=${SONG_DB_HOST}
       - SONG_DB_PORT=${SONG_DB_PORT}
@@ -38,8 +50,12 @@ services:
       - SONG_DB_USERNAME=${SONG_DB_USERNAME}
       - SONG_DB_PASSWORD=${SONG_DB_PASSWORD}
       - SONG_SERVICE_PORT=${SONG_SERVICE_PORT}
+      - EUREKA_SERVER_URL=${EUREKA_SERVER_URL}
     ports:
-      - "${SONG_SERVICE_PORT}:${SONG_SERVICE_PORT}"
+      - 8082-8083:8082
+    depends_on:
+      - song-db
+      - eureka-server
 
   # Resource Service
   resource-service:
@@ -53,7 +69,11 @@ services:
       - RESOURCE_DB_NAME=${RESOURCE_DB_NAME}
       - RESOURCE_DB_USERNAME=${RESOURCE_DB_USERNAME}
       - RESOURCE_DB_PASSWORD=${RESOURCE_DB_PASSWORD}
-      - SONG_SERVICE_URL=${SONG_SERVICE_URL}
       - RESOURCE_SERVICE_PORT=${RESOURCE_SERVICE_PORT}
+      - SONG_SERVICE_URL=${SONG_SERVICE_URL}
+      - EUREKA_SERVER_URL=${EUREKA_SERVER_URL}
     ports:
       - "${RESOURCE_SERVICE_PORT}:${RESOURCE_SERVICE_PORT}"
+    depends_on:
+      - resource-db
+      - eureka-server

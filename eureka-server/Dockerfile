@@ -5,26 +5,26 @@ WORKDIR /app
 # Copy the Gradle configuration files
 COPY settings.gradle.kts gradlew /app/
 COPY gradle /app/gradle
-COPY resource-service/build.gradle.kts /app/resource-service/
+COPY eureka-server/build.gradle.kts /app/eureka-server/
 
 # Download dependencies
-RUN chmod +x ./gradlew && ./gradlew :resource-service:dependencies --no-daemon
+RUN chmod +x ./gradlew && ./gradlew :eureka-server:dependencies --no-daemon
 
 # Copy source code
-COPY resource-service/src /app/resource-service/src
+COPY eureka-server/src /app/eureka-server/src
 
 # Build the application
-RUN ./gradlew :resource-service:assemble -x test --no-daemon
+RUN ./gradlew :eureka-server:assemble -x test --no-daemon
 
 # Runtime stage
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
 # Copy JAR from build stage
-COPY --from=build /app/resource-service/build/libs/*.jar app.jar
+COPY --from=build /app/eureka-server/build/libs/*.jar app.jar
 
 # Expose port
-EXPOSE 8081
+EXPOSE 8761
 
 # Run command
 CMD ["java", "-jar", "app.jar"]

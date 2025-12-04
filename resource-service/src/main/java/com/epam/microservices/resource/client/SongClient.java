@@ -2,7 +2,7 @@ package com.epam.microservices.resource.client;
 
 import com.epam.microservices.resource.dto.SongMetadata;
 import com.epam.microservices.resource.exception.SongServiceException;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -12,11 +12,11 @@ import java.util.List;
 
 @Component
 public class SongClient {
-    
+
     private final WebClient webClient;
-    
-    public SongClient(WebClient.Builder webClientBuilder, @Value("${song-service.url}") String songServiceUrl) {
-        this.webClient = webClientBuilder.baseUrl(songServiceUrl).build();
+
+    public SongClient(@Qualifier("songServiceClient") WebClient songServiceClient) {
+        this.webClient = songServiceClient;
     }
     
     public void createSongMetadata(SongMetadata songMetadata) {

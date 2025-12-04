@@ -5,7 +5,6 @@ WORKDIR /app
 # Copy the Gradle configuration files
 COPY settings.gradle.kts gradlew /app/
 COPY gradle /app/gradle
-COPY resource-service/build.gradle.kts /app/resource-service/
 COPY song-service/build.gradle.kts /app/song-service/
 
 # Download dependencies

@@ -1,5 +1,7 @@
 package com.epam.microservices.resource.config;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
@@ -13,20 +15,26 @@ import reactor.core.publisher.Mono;
 
 @Configuration
 public class WebClientConfig {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(WebClientConfig.class);
 
     @Bean
+    @LoadBalanced
     public WebClient.Builder webClientBuilder() {
         final ExchangeStrategies strategies = ExchangeStrategies.builder()
                 .codecs(codecs -> codecs.defaultCodecs().maxInMemorySize(16 * 1024 * 1024))
                 .build();
-        
+
         return WebClient.builder()
                 .exchangeStrategies(strategies)
                 .defaultHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
                 .filter(logRequest())
                 .filter(logResponse());
+    }
+
+    @Bean
+    public WebClient songServiceClient(WebClient.Builder webClientBuilder, @Value("${song.service.url}") String songServiceUrl) {
+        return webClientBuilder.baseUrl(songServiceUrl).build();
     }
 
     private ExchangeFilterFunction logRequest() {
